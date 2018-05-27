@@ -34,16 +34,18 @@ public class CallRecordService extends Service {
     private static final String TAG = "CallRecordService";
     private static final String NOTIFICATION_CHANNEL = "TRADING_HURTS_CHANNEL";
     private static final Integer FOREGROUNG_ID = 101;
-    private static final String DEDICATED_THREAD_NAME = "CallRecordThread";
+    // private static final String DEDICATED_THREAD_NAME = "CallRecordThread";
     public static final String ACTION_START_RECORDING = "co.guidap.tradinghurts.action.START_RECORDING";
     public static final String ACTION_STOP_RECORDING = "co.guidap.tradinghurts.action.STOP_RECORDING";
     public static final String EXTRA_INCOMING_NUMBER = "co.guidap.tradinghurts.extra.INCOMING_NUMBER";
 
-    private HandlerThread mThread;
-    private Recorder mRecorder;
-    private Handler mServiceHandler;
-    private NotificationManager mNotificationManager;
+    // private HandlerThread mThread;
+    // private Recorder mRecorder;
+    // private Handler mServiceHandler;
     private Integer startId;
+    private State serviceState = State.STOPPED;
+    private NotificationManager mNotificationManager;
+    private SpeechRecognizer mSpeechRecognizer;
 
     @Nullable
     @Override
@@ -57,7 +59,7 @@ public class CallRecordService extends Service {
         // separate thread because the service normally runs in the process's
         // main thread, which we don't want to block. We also make it
         // background priority so CPU-intensive work doesn't disrupt our UI.
-        mThread = new HandlerThread(DEDICATED_THREAD_NAME, Thread.NORM_PRIORITY);
+        /*mThread = new HandlerThread(DEDICATED_THREAD_NAME, Thread.NORM_PRIORITY);
         mThread.start();
         mServiceHandler = new Handler(mThread.getLooper());
         mRecorder = new Recorder(this, new Recorder.Callback() {
@@ -71,7 +73,7 @@ public class CallRecordService extends Service {
                 Log.d(TAG, "Stopping service for startId="+startId);
                 CallRecordService.this.exitSafely(startId);
             }
-        });
+        });*/
 
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
     }
@@ -85,27 +87,31 @@ public class CallRecordService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
             case ACTION_START_RECORDING:
+                if (serviceState != State.STOPPED) {
+                    break;
+                }
+                Log.d(TAG, "Starting service with startId=" + startId);
                 Toast
                     .makeText(this, "Record started for "+intent.getStringExtra(EXTRA_INCOMING_NUMBER), Toast.LENGTH_SHORT)
                     .show();
                 // For each start request, send a message to start a job and deliver the
                 // start ID so we know which request we're stopping when we finish the job
+                startForeground(FOREGROUNG_ID, updateNotification());
                 this.startId = startId;
-                mServiceHandler.postDelayed(mRecorder, 1000);
-
-                /*Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-
-                SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(mContext);
-                speechRecognizer.setRecognitionListener(new SpeechRecognitionListener(mContext));
-                speechRecognizer.startListening(intent);
-                speechRecognizer.stopListening();
-                speechRecognizer.destroy();*/
-
+                // mServiceHandler.postDelayed(mRecorder, 1000);
+                if (SpeechRecognizer.isRecognitionAvailable(this)) {
+                    initializeSpeechRecognizer();
+                } else {
+                    Log.d(TAG, "SpeechRecognizer not available");
+                }
+                serviceState = State.RUNNING;
                 break;
             case ACTION_STOP_RECORDING:
+                if (serviceState != State.RUNNING) {
+                    break;
+                }
                 this.exitSafely(this.startId);
+                serviceState = State.STOPPED;
                 break;
             default:
                 break;
@@ -134,8 +140,8 @@ public class CallRecordService extends Service {
             mNotificationManager.createNotificationChannel(channel);
 
             Notification.Builder builder = new Notification.Builder(this, NOTIFICATION_CHANNEL)
-                    .setContentTitle(String.valueOf(R.string.notification_title))
-                    .setContentText(String.valueOf(R.string.notification_message))
+                    .setContentTitle(this.getString(R.string.notification_title))
+                    .setContentText(this.getString(R.string.notification_message))
                     .setSmallIcon(R.drawable.ic_launcher_foreground)
                     .setContentIntent(pendingIntent)
                     .setOngoing(true);
@@ -146,12 +152,27 @@ public class CallRecordService extends Service {
         Log.d(TAG, "Notification builded in compatibility mode");
 
         return new NotificationCompat.Builder(this)
-                .setContentTitle(String.valueOf(R.string.notification_title))
-                .setContentText(String.valueOf(R.string.notification_message))
+                .setContentTitle(this.getString(R.string.notification_title))
+                .setContentText(this.getString(R.string.notification_message))
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentIntent(pendingIntent)
                 .setOngoing(true)
                 .build();
+    }
+
+    private void initializeSpeechRecognizer() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+
+        if (mSpeechRecognizer == null) {
+            mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+            mSpeechRecognizer.setRecognitionListener(new SpeechRecognitionListener(this));
+        } else {
+            mSpeechRecognizer.cancel();
+        }
+        mSpeechRecognizer.startListening(intent);
     }
 
     /**
@@ -159,13 +180,25 @@ public class CallRecordService extends Service {
      * @param startId
      */
     private void exitSafely(@Nullable Integer startId) {
-        mServiceHandler.removeCallbacks(mRecorder);
-        mThread.quitSafely();
+        // mServiceHandler.removeCallbacks(mRecorder);
+        // mThread.quitSafely();
+        Log.d(TAG, "Stopping service for startId="+startId);
+        if (mSpeechRecognizer != null) {
+            Log.d(TAG, "Stopping SpeechRecognizer");
+            mSpeechRecognizer.stopListening();
+            mSpeechRecognizer.destroy();
+            mSpeechRecognizer = null;
+        }
         stopForeground(true);
         if (startId != null) {
             stopSelf(startId);
         } else {
             stopSelf();
         }
+    }
+
+    public enum State {
+        RUNNING,
+        STOPPED
     }
 }
