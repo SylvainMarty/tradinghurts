@@ -41,15 +41,13 @@ public class PhoneStateReceiver extends BroadcastReceiver {
             super.onCallStateChanged(state, incomingNumber);
             switch (state)
             {
-                case TelephonyManager.CALL_STATE_RINGING:
-                    // Call incoming
-                    Toast.makeText(context, "CALL_STATE_RINGING", Toast.LENGTH_SHORT).show();
-                    break;
                 case TelephonyManager.CALL_STATE_IDLE:
                     // Call done
-                    Toast.makeText(context, "CALL_STATE_IDLE", Toast.LENGTH_SHORT).show();
+                    /*Intent stopIntent = new Intent(context, CallRecordService.class);
+                    context.stopService(stopIntent);*/
                     Intent stopIntent = new Intent(context, CallRecordService.class);
-                    context.stopService(stopIntent);
+                    stopIntent.setAction(CallRecordService.ACTION_STOP_RECORDING);
+                    context.startService(stopIntent);
                     serviceRunning = false;
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:

@@ -1,25 +1,19 @@
 package co.guidap.tradinghurts.callrecorder;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
-import android.os.Handler;
+import android.media.MediaRecorder;
+import android.os.Build;
 import android.os.Message;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 
-import co.guidap.tradinghurts.R;
-import co.guidap.tradinghurts.SettingsActivity;
+import java.io.File;
+import java.io.IOException;
 
 /**
  * Created by sylvainmarty on 26/05/2018.
  */
 
-public class Recorder implements Handler.Callback {
-
+public class Recorder implements Runnable {
     private static final String TAG = "Recorder";
 
     public interface Callback {
@@ -32,33 +26,64 @@ public class Recorder implements Handler.Callback {
         /**
          * Called when the current recording stopped
          */
-        void onStop(Message msg);
+        void onStop(int startId);
 
     }
 
-    private Callback recordCallback;
+    private Context mContext;
+    private Callback mCallback;
+    private int startId;
 
-    public Recorder(Callback recordCallback) {
-        this.recordCallback = recordCallback;
+    public Recorder(Context context, Callback recordCallback) {
+        this.mContext = context;
+        this.mCallback = recordCallback;
+    }
+
+    public void record(int startId) {
+        this.startId = startId;
+        this.run();
     }
 
     @Override
-    public boolean handleMessage(Message msg) {
-        if (recordCallback != null) {
-            recordCallback.onStart();
+    public void run() {
+        Log.d(TAG, "Runner started with startId="+startId);
+        if (mCallback != null) {
+            mCallback.onStart();
+        }
+
+        /*MediaRecorder recorder = new MediaRecorder();
+        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
+        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+        File file = new File(mContext.getFilesDir(), "test");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            recorder.setOutputFile(file);
+        } else {
+            recorder.setOutputFile(file.getPath());
         }
 
         try {
-            Thread.sleep(30000);
-        } catch (InterruptedException e) {
-            // Restore interrupt status.
+            recorder.prepare();
+        } catch (IOException e) {
+            Log.e(TAG, "An error happened when preparing audio record", e);
             Thread.currentThread().interrupt();
         }
 
-        if (recordCallback != null) {
-            recordCallback.onStop(msg);
-        }
-        return false;
-    }
+        recorder.start();*/
 
+        int count = 1;
+        while (count <= 10) {
+            Log.d(TAG, "I'm a thread, count="+count);
+            try {
+                Thread.sleep(1000);
+            } catch (Exception e) {
+                Thread.currentThread().interrupt();
+            }
+            count++;
+        }
+
+        if (mCallback != null) {
+            mCallback.onStop(startId);
+        }
+    }
 }

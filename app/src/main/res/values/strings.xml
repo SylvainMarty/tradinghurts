@@ -1,7 +1,10 @@
 <resources>
     <string name="app_name">Trading Hurts</string>
+
+    <!-- Notifications -->
     <string name="notification_title">Call recording</string>
-    <string name="notification_message">Recording current call...</string>
+    <string name="notification_message">Recording current call…</string>
+    <string name="notification_channel_description">Call recorder service notifications</string>
 
     <!-- Strings related to Settings -->
 
