@@ -1,13 +1,19 @@
 package co.guidap.tradinghurts.callrecorder;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.MediaRecorder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Message;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Locale;
 
 /**
  * Created by sylvainmarty on 26/05/2018.
@@ -51,7 +57,7 @@ public class Recorder implements Runnable {
             mCallback.onStart();
         }
 
-        /*MediaRecorder recorder = new MediaRecorder();
+        MediaRecorder recorder = new MediaRecorder();
         recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
         recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
         recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
@@ -61,17 +67,15 @@ public class Recorder implements Runnable {
         } else {
             recorder.setOutputFile(file.getPath());
         }
-
         try {
             recorder.prepare();
         } catch (IOException e) {
             Log.e(TAG, "An error happened when preparing audio record", e);
             Thread.currentThread().interrupt();
         }
+        recorder.start();
 
-        recorder.start();*/
-
-        int count = 1;
+        /*int count = 1;
         while (count <= 10) {
             Log.d(TAG, "I'm a thread, count="+count);
             try {
@@ -80,7 +84,7 @@ public class Recorder implements Runnable {
                 Thread.currentThread().interrupt();
             }
             count++;
-        }
+        }*/
 
         if (mCallback != null) {
             mCallback.onStop(startId);

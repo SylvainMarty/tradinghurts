@@ -12,10 +12,14 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
+
+import java.util.Locale;
 
 import co.guidap.tradinghurts.R;
 import co.guidap.tradinghurts.SettingsActivity;
@@ -74,7 +78,7 @@ public class CallRecordService extends Service {
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "service done", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Service done", Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -88,6 +92,17 @@ public class CallRecordService extends Service {
                 // start ID so we know which request we're stopping when we finish the job
                 this.startId = startId;
                 mServiceHandler.postDelayed(mRecorder, 1000);
+
+                /*Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+                intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+
+                SpeechRecognizer speechRecognizer = SpeechRecognizer.createSpeechRecognizer(mContext);
+                speechRecognizer.setRecognitionListener(new SpeechRecognitionListener(mContext));
+                speechRecognizer.startListening(intent);
+                speechRecognizer.stopListening();
+                speechRecognizer.destroy();*/
+
                 break;
             case ACTION_STOP_RECORDING:
                 this.exitSafely(this.startId);
