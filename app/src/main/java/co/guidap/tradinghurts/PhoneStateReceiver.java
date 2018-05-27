@@ -30,6 +30,7 @@ public class PhoneStateReceiver extends BroadcastReceiver {
     class CallListener extends PhoneStateListener
     {
         private Context context;
+        private Boolean serviceRunning = false;
 
         public CallListener(Context context) {
             this.context = context;
@@ -49,13 +50,17 @@ public class PhoneStateReceiver extends BroadcastReceiver {
                     Toast.makeText(context, "CALL_STATE_IDLE", Toast.LENGTH_SHORT).show();
                     Intent stopIntent = new Intent(context, CallRecordService.class);
                     context.stopService(stopIntent);
+                    serviceRunning = false;
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
                     // Call responded
-                    Intent startIntent = new Intent(context, CallRecordService.class);
-                    startIntent.setAction(CallRecordService.ACTION_START_RECORDING);
-                    startIntent.putExtra(CallRecordService.EXTRA_INCOMING_NUMBER, incomingNumber);
-                    context.startService(startIntent);
+                    if (!serviceRunning) {
+                        Intent startIntent = new Intent(context, CallRecordService.class);
+                        startIntent.setAction(CallRecordService.ACTION_START_RECORDING);
+                        startIntent.putExtra(CallRecordService.EXTRA_INCOMING_NUMBER, incomingNumber);
+                        context.startService(startIntent);
+                        serviceRunning = true;
+                    }
                     break;
                 default:
                     break;
