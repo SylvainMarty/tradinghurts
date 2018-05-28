@@ -34,18 +34,14 @@ public class CallRecordService extends Service {
     private static final String TAG = "CallRecordService";
     private static final String NOTIFICATION_CHANNEL = "TRADING_HURTS_CHANNEL";
     private static final Integer FOREGROUNG_ID = 101;
-    // private static final String DEDICATED_THREAD_NAME = "CallRecordThread";
     public static final String ACTION_START_RECORDING = "co.guidap.tradinghurts.action.START_RECORDING";
     public static final String ACTION_STOP_RECORDING = "co.guidap.tradinghurts.action.STOP_RECORDING";
     public static final String EXTRA_INCOMING_NUMBER = "co.guidap.tradinghurts.extra.INCOMING_NUMBER";
 
-    // private HandlerThread mThread;
-    // private Recorder mRecorder;
-    // private Handler mServiceHandler;
     private Integer startId;
     private State serviceState = State.STOPPED;
     private NotificationManager mNotificationManager;
-    private SpeechRecognizer mSpeechRecognizer;
+    private Recorder mRecorder;
 
     @Nullable
     @Override
@@ -55,26 +51,6 @@ public class CallRecordService extends Service {
 
     @Override
     public void onCreate() {
-        // Start up the thread running the service. Note that we create a
-        // separate thread because the service normally runs in the process's
-        // main thread, which we don't want to block. We also make it
-        // background priority so CPU-intensive work doesn't disrupt our UI.
-        /*mThread = new HandlerThread(DEDICATED_THREAD_NAME, Thread.NORM_PRIORITY);
-        mThread.start();
-        mServiceHandler = new Handler(mThread.getLooper());
-        mRecorder = new Recorder(this, new Recorder.Callback() {
-            @Override
-            public void onStart() {
-                startForeground(FOREGROUNG_ID, updateNotification());
-            }
-
-            @Override
-            public void onStop(int startId) {
-                Log.d(TAG, "Stopping service for startId="+startId);
-                CallRecordService.this.exitSafely(startId);
-            }
-        });*/
-
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
     }
 
@@ -98,12 +74,8 @@ public class CallRecordService extends Service {
                 // start ID so we know which request we're stopping when we finish the job
                 startForeground(FOREGROUNG_ID, updateNotification());
                 this.startId = startId;
-                // mServiceHandler.postDelayed(mRecorder, 1000);
-                if (SpeechRecognizer.isRecognitionAvailable(this)) {
-                    initializeSpeechRecognizer();
-                } else {
-                    Log.d(TAG, "SpeechRecognizer not available");
-                }
+                mRecorder = new Recorder(this);
+                mRecorder.start();
                 serviceState = State.RUNNING;
                 break;
             case ACTION_STOP_RECORDING:
@@ -160,34 +132,16 @@ public class CallRecordService extends Service {
                 .build();
     }
 
-    private void initializeSpeechRecognizer() {
-        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
-        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
-
-        if (mSpeechRecognizer == null) {
-            mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
-            mSpeechRecognizer.setRecognitionListener(new SpeechRecognitionListener(this));
-        } else {
-            mSpeechRecognizer.cancel();
-        }
-        mSpeechRecognizer.startListening(intent);
-    }
-
     /**
      * Stop current service safely
      * @param startId
      */
     private void exitSafely(@Nullable Integer startId) {
-        // mServiceHandler.removeCallbacks(mRecorder);
-        // mThread.quitSafely();
         Log.d(TAG, "Stopping service for startId="+startId);
-        if (mSpeechRecognizer != null) {
+        if (mRecorder != null) {
             Log.d(TAG, "Stopping SpeechRecognizer");
-            mSpeechRecognizer.stopListening();
-            mSpeechRecognizer.destroy();
-            mSpeechRecognizer = null;
+            mRecorder.stop();
+            mRecorder = null;
         }
         stopForeground(true);
         if (startId != null) {

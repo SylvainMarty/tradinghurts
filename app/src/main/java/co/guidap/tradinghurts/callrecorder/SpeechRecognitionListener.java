@@ -8,7 +8,7 @@ import android.util.Log;
 
 import java.util.ArrayList;
 
-public class SpeechRecognitionListener implements RecognitionListener {
+public abstract class SpeechRecognitionListener implements RecognitionListener {
     private static final String TAG = "SpeechRecognitionListener";
 
     private Context mContext;
@@ -38,35 +38,25 @@ public class SpeechRecognitionListener implements RecognitionListener {
     }
 
     @Override
-    public void onEndOfSpeech() {
-        Log.d(TAG, "onEndOfSpeech()");
-    }
+    public abstract void onEndOfSpeech();
 
     @Override
-    public void onError(int i) {
-        Log.d(TAG, "onError() -> error="+i);
-    }
+    public abstract void onError(int i);
 
     @Override
-    public void onResults(Bundle bundle) {
-        Log.d(TAG, "onResults()");
-        ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        for (String text : results) {
-            Log.d(TAG, "    --> "+text);
-        }
-    }
+    public abstract void onResults(Bundle bundle);
 
     @Override
     public void onPartialResults(Bundle bundle) {
-        Log.d(TAG, "onPartialResults() : "+bundle.toString());
+        /*Log.d(TAG, "onPartialResults() : "+bundle.toString());
         ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
         for (String text : results) {
             Log.d(TAG, "    --> "+text);
-        }
+        }*/
     }
 
     @Override
     public void onEvent(int i, Bundle bundle) {
-        Log.d(TAG, "onEvent()");
+        Log.d(TAG, "onEvent() code="+i);
     }
 }

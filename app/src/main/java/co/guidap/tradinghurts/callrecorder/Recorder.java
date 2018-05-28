@@ -2,6 +2,7 @@ package co.guidap.tradinghurts.callrecorder;
 
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioManager;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
@@ -13,81 +14,94 @@ import android.util.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Locale;
 
 /**
  * Created by sylvainmarty on 26/05/2018.
  */
 
-public class Recorder implements Runnable {
+public class Recorder {
     private static final String TAG = "Recorder";
 
-    public interface Callback {
-
-        /**
-         * Called when the record start
-         */
-        void onStart();
-
-        /**
-         * Called when the current recording stopped
-         */
-        void onStop(int startId);
-
-    }
-
     private Context mContext;
-    private Callback mCallback;
-    private int startId;
+    private SpeechRecognizer mSpeechRecognizer;
+    private Intent mIntent;
+    private AudioManager mAudio;
 
-    public Recorder(Context context, Callback recordCallback) {
+    public Recorder(Context context) {
         this.mContext = context;
-        this.mCallback = recordCallback;
     }
 
-    public void record(int startId) {
-        this.startId = startId;
-        this.run();
-    }
+    public void start() {
+        mAudio = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  AudioManager.FLAG_SHOW_UI);
 
-    @Override
-    public void run() {
-        Log.d(TAG, "Runner started with startId="+startId);
-        if (mCallback != null) {
-            mCallback.onStart();
-        }
-
-        MediaRecorder recorder = new MediaRecorder();
-        recorder.setAudioSource(MediaRecorder.AudioSource.VOICE_CALL);
-        recorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
-        File file = new File(mContext.getFilesDir(), "test");
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            recorder.setOutputFile(file);
+        if (SpeechRecognizer.isRecognitionAvailable(mContext)) {
+            initSpeechRecognizer();
         } else {
-            recorder.setOutputFile(file.getPath());
+            Log.d(TAG, "SpeechRecognizer not available");
         }
-        try {
-            recorder.prepare();
-        } catch (IOException e) {
-            Log.e(TAG, "An error happened when preparing audio record", e);
-            Thread.currentThread().interrupt();
-        }
-        recorder.start();
+    }
 
-        /*int count = 1;
-        while (count <= 10) {
-            Log.d(TAG, "I'm a thread, count="+count);
-            try {
-                Thread.sleep(1000);
-            } catch (Exception e) {
-                Thread.currentThread().interrupt();
-            }
-            count++;
-        }*/
-
-        if (mCallback != null) {
-            mCallback.onStop(startId);
+    public void stop() {
+        mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, mAudio.getStreamMaxVolume(AudioManager.STREAM_MUSIC), AudioManager.FLAG_SHOW_UI);
+        if (mSpeechRecognizer != null) {
+            mSpeechRecognizer.stopListening();
+            mSpeechRecognizer.destroy();
+            mSpeechRecognizer = null;
         }
+    }
+
+    private void initSpeechRecognizer() {
+        mIntent = buildIntent();
+
+        if (mSpeechRecognizer == null) {
+            mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(mContext);
+            mSpeechRecognizer.setRecognitionListener(new SpeechRecognitionListener(mContext) {
+                @Override
+                public void onEndOfSpeech() {
+                    Log.d(TAG, "onEndOfSpeech()");
+                }
+
+                @Override
+                public void onError(int i) {
+                    Log.d(TAG, "onError() -> error="+i);
+                    if (i == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                        mSpeechRecognizer.startListening(mIntent);
+                    }
+                }
+
+                @Override
+                public void onResults(Bundle bundle) {
+                    Log.d(TAG, "onResults()");
+                    ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+                    for (String text : results) {
+                        Log.d(TAG, "    --> "+text);
+                    }
+                    Log.d(TAG, "onResults() : recharging");
+                    //mSpeechRecognizer.stopListening();
+                    mSpeechRecognizer.startListening(mIntent);
+                }
+            });
+        } else {
+            mSpeechRecognizer.cancel();
+        }
+
+        mSpeechRecognizer.startListening(mIntent);
+    }
+
+    private Intent buildIntent() {
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.getDefault());
+        intent.putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true);
+        intent.putExtra(RecognizerIntent.EXTRA_PREFER_OFFLINE, true);
+        intent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1000000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 60000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 60000);
+        intent.putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_MINIMUM_LENGTH_MILLIS, 1000);
+
+        return intent;
     }
 }
