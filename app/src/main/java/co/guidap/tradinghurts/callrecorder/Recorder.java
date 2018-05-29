@@ -1,5 +1,6 @@
 package co.guidap.tradinghurts.callrecorder;
 
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
@@ -19,6 +20,9 @@ import java.util.ArrayList;
 import java.util.Locale;
 
 import co.guidap.tradinghurts.R;
+import co.guidap.tradinghurts.persistence.Record;
+import co.guidap.tradinghurts.persistence.RecordRepository;
+import co.guidap.tradinghurts.persistence.RecordViewModel;
 
 /**
  * Created by sylvainmarty on 26/05/2018.
@@ -31,24 +35,34 @@ public class Recorder {
     private SpeechRecognizer mSpeechRecognizer;
     private Intent mIntent;
     private AudioManager mAudio;
+    private RecordRepository mRecordRepository;
 
     public Recorder(Context context) {
-        this.mContext = context;
+        mContext = context;
+        mRecordRepository = new RecordRepository(mContext);
     }
 
-    public void start() {
+    public void start(String phoneNumber) {
         mAudio = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
-        mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  AudioManager.FLAG_SHOW_UI);
+        if (mAudio != null) {
+            try {
+                mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, 0,  AudioManager.FLAG_SHOW_UI);
+            } catch (Throwable ignored){}
+        }
 
         if (SpeechRecognizer.isRecognitionAvailable(mContext)) {
-            initSpeechRecognizer();
+            initSpeechRecognizer(phoneNumber);
         } else {
             Toast.makeText(mContext, mContext.getString(R.string.speech_recognizer_not_available), Toast.LENGTH_SHORT).show();
         }
     }
 
     public void stop() {
-        mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, mAudio.getStreamMaxVolume(AudioManager.STREAM_MUSIC), AudioManager.FLAG_SHOW_UI);
+        if (mAudio != null) {
+            try {
+                mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, mAudio.getStreamMaxVolume(AudioManager.STREAM_MUSIC), AudioManager.FLAG_SHOW_UI);
+            } catch (Throwable ignored){}
+        }
         if (mSpeechRecognizer != null) {
             mSpeechRecognizer.stopListening();
             mSpeechRecognizer.destroy();
@@ -56,8 +70,10 @@ public class Recorder {
         }
     }
 
-    private void initSpeechRecognizer() {
+    private void initSpeechRecognizer(String phoneNumber) {
         mIntent = buildIntent();
+        final Record record = new Record(phoneNumber);
+        mRecordRepository.insert(record);
 
         if (mSpeechRecognizer == null) {
             mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(mContext);
@@ -77,10 +93,18 @@ public class Recorder {
 
                 @Override
                 public void onResults(Bundle bundle) {
-                    Log.d(TAG, "onResults()");
+                    StringBuilder conversation = new StringBuilder();
+                    if (record.getConversation() != null) {
+                        conversation.append(record.getConversation());
+                    }
                     ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-                    for (String text : results) {
-                        Log.d(TAG, "    --> "+text);
+                    if (results != null) {
+                        for (String text : results) {
+                            conversation.append("- ").append(text).append("\n");
+                        }
+                        Log.d(TAG, "onResults() : " + conversation.toString());
+                        record.setConversation(conversation.toString());
+                        mRecordRepository.update(record);
                     }
                     Log.d(TAG, "onResults() : recharging");
                     //mSpeechRecognizer.stopListening();

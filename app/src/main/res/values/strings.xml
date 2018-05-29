@@ -8,6 +8,7 @@
 
     <!-- Infos -->
     <string name="speech_recognizer_not_available">Speech recognizer not available</string>
+    <string name="no_record_registered">No record registered</string>
 
     <!-- Strings related to Settings -->
 

@@ -52,11 +52,13 @@ public class CallRecordService extends Service {
     @Override
     public void onCreate() {
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
+        mRecorder = new Recorder(this);
     }
 
     @Override
     public void onDestroy() {
         Toast.makeText(this, "Service done", Toast.LENGTH_SHORT).show();
+        mRecorder = null;
     }
 
     @Override
@@ -74,8 +76,7 @@ public class CallRecordService extends Service {
                 // start ID so we know which request we're stopping when we finish the job
                 startForeground(FOREGROUNG_ID, updateNotification());
                 this.startId = startId;
-                mRecorder = new Recorder(this);
-                mRecorder.start();
+                mRecorder.start(intent.getStringExtra(EXTRA_INCOMING_NUMBER));
                 serviceState = State.RUNNING;
                 break;
             case ACTION_STOP_RECORDING:
