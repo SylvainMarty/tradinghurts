@@ -11,11 +11,14 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
+
+import co.guidap.tradinghurts.R;
 
 /**
  * Created by sylvainmarty on 26/05/2018.
@@ -40,7 +43,7 @@ public class Recorder {
         if (SpeechRecognizer.isRecognitionAvailable(mContext)) {
             initSpeechRecognizer();
         } else {
-            Log.d(TAG, "SpeechRecognizer not available");
+            Toast.makeText(mContext, mContext.getString(R.string.speech_recognizer_not_available), Toast.LENGTH_SHORT).show();
         }
     }
 

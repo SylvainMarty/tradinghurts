@@ -48,11 +48,7 @@ public abstract class SpeechRecognitionListener implements RecognitionListener {
 
     @Override
     public void onPartialResults(Bundle bundle) {
-        /*Log.d(TAG, "onPartialResults() : "+bundle.toString());
-        ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
-        for (String text : results) {
-            Log.d(TAG, "    --> "+text);
-        }*/
+
     }
 
     @Override
