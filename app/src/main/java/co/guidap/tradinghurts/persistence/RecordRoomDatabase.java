@@ -17,10 +17,10 @@ public abstract class RecordRoomDatabase extends RoomDatabase {
         if (INSTANCE == null) {
             synchronized (RecordRoomDatabase.class) {
                 if (INSTANCE == null) {
-                    //Room.inMemoryDatabaseBuilder(context, RecordRoomDatabase.class)
                     INSTANCE = Room.databaseBuilder(
                         context.getApplicationContext(),
-                        RecordRoomDatabase.class, "record_database"
+                        RecordRoomDatabase.class,
+                        "record_database"
                     )
                     .addMigrations(getMigrations())
                     .build();

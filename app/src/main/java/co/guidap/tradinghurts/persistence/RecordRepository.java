@@ -29,6 +29,10 @@ public class RecordRepository {
         return mAllRecords;
     }
 
+    public LiveData<Record> getRecord(int id) {
+        return mRecordDao.getRecord(id);
+    }
+
     private static class InsertAsyncTask extends AsyncTask<Record, Void, Void> {
 
         private RecordDao mAsyncTaskDao;

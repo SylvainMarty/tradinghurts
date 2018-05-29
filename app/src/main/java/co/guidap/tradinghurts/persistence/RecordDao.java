@@ -21,4 +21,7 @@ public interface RecordDao {
 
     @Query("SELECT * from record ORDER BY id DESC")
     LiveData<List<Record>> getAllRecords();
+
+    @Query("SELECT * from record WHERE id = :id")
+    LiveData<Record> getRecord(int id);
 }

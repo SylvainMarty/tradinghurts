@@ -1,4 +1,4 @@
-package co.guidap.tradinghurts;
+package co.guidap.tradinghurts.callrecorder;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;

@@ -2,11 +2,13 @@ package co.guidap.tradinghurts;
 
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
+import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 
 import java.util.List;
 
@@ -22,9 +24,17 @@ public class RecordListActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record_list);
+        setTitle(R.string.record_list_title);
 
         RecyclerView recyclerView = findViewById(R.id.recyclerview);
-        final RecordListAdapter adapter = new RecordListAdapter(this);
+        final RecordListAdapter adapter = new RecordListAdapter(this, new RecordListAdapter.Callback() {
+            @Override
+            public void onRecordSelected(Record record) {
+                Intent intent = new Intent(RecordListActivity.this, RecordDetailsActivity.class);
+                intent.putExtra(RecordDetailsActivity.EXTRA_RECORD_IDENTIFIER, record.getId());
+                startActivityForResult(intent, RecordDetailsActivity.REQUEST_SHOW_DETAILS);
+            }
+        });
         recyclerView.setAdapter(adapter);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 

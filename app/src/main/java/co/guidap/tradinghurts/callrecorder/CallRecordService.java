@@ -7,22 +7,14 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
-import android.os.Looper;
-import android.os.Message;
-import android.speech.RecognizerIntent;
-import android.speech.SpeechRecognizer;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.util.Locale;
-
 import co.guidap.tradinghurts.R;
-import co.guidap.tradinghurts.SettingsActivity;
+import co.guidap.tradinghurts.RecordListActivity;
 
 
 /**
@@ -100,7 +92,7 @@ public class CallRecordService extends Service {
      */
     private Notification updateNotification() {
         PendingIntent pendingIntent = PendingIntent.getActivity(this, 0,
-                new Intent(this, SettingsActivity.class), 0);
+                new Intent(this, RecordListActivity.class), 0);
 
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O && mNotificationManager != null) {
             NotificationChannel channel = new NotificationChannel(

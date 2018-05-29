@@ -31,7 +31,7 @@
         </activity>
 
         <receiver
-            android:name=".PhoneStateReceiver"
+            android:name=".callrecorder.PhoneStateReceiver"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -41,7 +41,11 @@
 
         <service android:name=".callrecorder.CallRecordService" />
 
-        <activity android:name=".SettingsActivity" />
+        <activity android:name=".RecordDetailsActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".RecordListActivity" />
+        </activity>
     </application>
 
 </manifest>
