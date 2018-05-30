@@ -3,7 +3,12 @@ package co.guidap.tradinghurts.persistence;
 import android.arch.persistence.room.ColumnInfo;
 import android.arch.persistence.room.Entity;
 import android.arch.persistence.room.PrimaryKey;
+import android.arch.persistence.room.TypeConverters;
 import android.support.annotation.NonNull;
+
+import java.util.Date;
+
+import co.guidap.tradinghurts.persistence.type.DateTypeConverter;
 
 @Entity(tableName = "record")
 public class Record {
@@ -18,6 +23,10 @@ public class Record {
 
     @ColumnInfo(name = "conversation")
     private String mConversation;
+
+    @ColumnInfo(name = "date")
+    @TypeConverters({DateTypeConverter.class})
+    private Date mDate;
 
     public Record(@NonNull String phoneNumber) {
         this.mPhoneNumber = phoneNumber;
@@ -46,5 +55,13 @@ public class Record {
 
     public void setConversation(String conversation) {
         this.mConversation = conversation;
+    }
+
+    public Date getDate() {
+        return mDate;
+    }
+
+    public void setDate(Date date) {
+        this.mDate = date;
     }
 }

@@ -8,7 +8,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 
 import co.guidap.tradinghurts.R;
 import co.guidap.tradinghurts.persistence.Record;
@@ -35,10 +38,14 @@ public class RecordListAdapter extends RecyclerView.Adapter<RecordListAdapter.Re
     public void onBindViewHolder(@NonNull RecordViewHolder holder, int position) {
         if (mRecords != null) {
             Record current = mRecords.get(position);
-            holder.wordItemView.setText(current.getPhoneNumber());
+            holder.phoneNumberView.setText(current.getPhoneNumber());
+            if (current.getDate() != null) {
+                DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.FRANCE);
+                holder.dateView.setText(df.format(current.getDate()));
+            }
         } else {
             // Covers the case of data not being ready yet.
-            holder.wordItemView.setText(R.string.no_record_registered);
+            holder.phoneNumberView.setText(R.string.no_record_registered);
         }
     }
 
@@ -57,12 +64,14 @@ public class RecordListAdapter extends RecyclerView.Adapter<RecordListAdapter.Re
     }
 
     class RecordViewHolder extends RecyclerView.ViewHolder {
-        private final TextView wordItemView;
+        private final TextView phoneNumberView;
+        private final TextView dateView;
 
         private RecordViewHolder(View itemView) {
             super(itemView);
-            wordItemView = itemView.findViewById(R.id.textView);
-            wordItemView.setOnClickListener(new View.OnClickListener() {
+            phoneNumberView = itemView.findViewById(R.id.phoneNumberView);
+            dateView = itemView.findViewById(R.id.dateView);
+            itemView.findViewById(R.id.listItemView).setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int itemPosition = getAdapterPosition();

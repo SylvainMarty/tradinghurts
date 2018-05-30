@@ -6,7 +6,9 @@ import android.arch.persistence.room.RoomDatabase;
 import android.arch.persistence.room.migration.Migration;
 import android.content.Context;
 
-@Database(entities = {Record.class}, version = 1)
+import co.guidap.tradinghurts.persistence.migrations.Migration1to2;
+
+@Database(entities = {Record.class}, version = 2)
 public abstract class RecordRoomDatabase extends RoomDatabase {
 
     public abstract RecordDao recordDao();
@@ -31,7 +33,9 @@ public abstract class RecordRoomDatabase extends RoomDatabase {
     }
 
     private static Migration[] getMigrations() {
-        return new Migration[]{};
+        return new Migration[]{
+                new Migration1to2()
+        };
     }
 
 }
