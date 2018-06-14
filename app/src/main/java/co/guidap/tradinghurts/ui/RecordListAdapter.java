@@ -3,6 +3,7 @@ package co.guidap.tradinghurts.ui;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
+import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +39,9 @@ public class RecordListAdapter extends RecyclerView.Adapter<RecordListAdapter.Re
     public void onBindViewHolder(@NonNull RecordViewHolder holder, int position) {
         if (mRecords != null) {
             Record current = mRecords.get(position);
-            holder.phoneNumberView.setText(current.getPhoneNumber());
+            holder.phoneNumberView.setText(
+                    PhoneNumberUtils.formatNumber(current.getPhoneNumber(), Locale.getDefault().getCountry())
+            );
             if (current.getDate() != null) {
                 DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.FRANCE);
                 holder.dateView.setText(df.format(current.getDate()));
