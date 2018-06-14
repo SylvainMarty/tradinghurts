@@ -13,5 +13,6 @@
 
     <!-- Strings related to Activities -->
     <string name="record_list_title">Records list</string>
+    <string name="record_list_item_button">Details</string>
     <string name="record_details_title">Record details</string>
 </resources>

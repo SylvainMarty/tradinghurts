@@ -7,6 +7,7 @@ import android.telephony.PhoneNumberUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import java.text.DateFormat;
@@ -72,16 +73,22 @@ public class RecordListAdapter extends RecyclerView.Adapter<RecordListAdapter.Re
 
         private RecordViewHolder(View itemView) {
             super(itemView);
+
+            Button showDetailsButton = itemView.findViewById(R.id.showDetailsButton);
             phoneNumberView = itemView.findViewById(R.id.phoneNumberView);
             dateView = itemView.findViewById(R.id.dateView);
-            itemView.findViewById(R.id.listItemView).setOnClickListener(new View.OnClickListener() {
+
+            View.OnClickListener listener = new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     int itemPosition = getAdapterPosition();
                     Record record = mRecords.get(itemPosition);
                     mCallback.onRecordSelected(record);
                 }
-            });
+            };
+
+            showDetailsButton.setOnClickListener(listener);
+            itemView.findViewById(R.id.listItemView).setOnClickListener(listener);
         }
     }
 
