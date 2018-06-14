@@ -15,7 +15,7 @@ public class Record {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    private int mId;
+    private long mId;
 
     @NonNull
     @ColumnInfo(name = "phone_number")
@@ -28,15 +28,16 @@ public class Record {
     @TypeConverters({DateTypeConverter.class})
     private Date mDate;
 
-    public Record(@NonNull String phoneNumber) {
+    public Record(@NonNull String phoneNumber, Date date) {
         this.mPhoneNumber = phoneNumber;
+        this.mDate = date;
     }
 
-    public int getId() {
+    public long getId() {
         return mId;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.mId = id;
     }
 

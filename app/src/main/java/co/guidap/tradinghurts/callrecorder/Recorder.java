@@ -1,28 +1,20 @@
 package co.guidap.tradinghurts.callrecorder;
 
-import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
-import android.media.MediaRecorder;
-import android.os.Build;
 import android.os.Bundle;
+import android.os.HandlerThread;
 import android.os.Message;
-import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.util.Log;
 import android.widget.Toast;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
 
 import co.guidap.tradinghurts.R;
-import co.guidap.tradinghurts.persistence.Record;
-import co.guidap.tradinghurts.persistence.RecordRepository;
-import co.guidap.tradinghurts.persistence.RecordViewModel;
 
 /**
  * Created by sylvainmarty on 26/05/2018.
@@ -35,14 +27,16 @@ public class Recorder {
     private SpeechRecognizer mSpeechRecognizer;
     private Intent mIntent;
     private AudioManager mAudio;
-    private RecordRepository mRecordRepository;
+    private HandlerThread mHandlerThread;
+    private RecordPersistenceHandler mRecordPersistenceHandler;
+    private StringBuilder mConversation;
 
     public Recorder(Context context) {
         mContext = context;
-        mRecordRepository = new RecordRepository(mContext);
     }
 
     public void start(String phoneNumber) {
+        // On baisse le volume des médias car le démarrage du SpeechRecognizer déclenche un bruit génant
         mAudio = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
         if (mAudio != null) {
             try {
@@ -51,63 +45,85 @@ public class Recorder {
         }
 
         if (SpeechRecognizer.isRecognitionAvailable(mContext)) {
+            // On démarre le thread secondaire
+            mHandlerThread = new HandlerThread("RecordPersisterThread");
+            mHandlerThread.start();
+            mRecordPersistenceHandler =
+                    new RecordPersistenceHandler(mHandlerThread.getLooper(), mContext);
+            // On remet à zéro la conversation locale mise en cache
+            mConversation = new StringBuilder();
             initSpeechRecognizer(phoneNumber);
         } else {
             Toast.makeText(mContext, mContext.getString(R.string.speech_recognizer_not_available), Toast.LENGTH_SHORT).show();
+            stop();
         }
     }
 
     public void stop() {
+        // On remet le volume des médias a sa valeur précédente
         if (mAudio != null) {
             try {
-                mAudio.setStreamVolume(AudioManager.STREAM_MUSIC, mAudio.getStreamMaxVolume(AudioManager.STREAM_MUSIC), AudioManager.FLAG_SHOW_UI);
+                mAudio.setStreamVolume(
+                        AudioManager.STREAM_MUSIC,
+                        mAudio.getStreamMaxVolume(AudioManager.STREAM_MUSIC),
+                        AudioManager.FLAG_SHOW_UI
+                );
             } catch (Throwable ignored){}
         }
+        // On stoppe le thread de queueing
+        if (mHandlerThread != null) {
+            mHandlerThread.quit();
+            mRecordPersistenceHandler = null;
+        }
+        // On éteint le SpeechRecognizer
         if (mSpeechRecognizer != null) {
             mSpeechRecognizer.stopListening();
             mSpeechRecognizer.destroy();
             mSpeechRecognizer = null;
+            mConversation = null;
         }
     }
 
     private void initSpeechRecognizer(String phoneNumber) {
-        mIntent = buildIntent();
-        final Record record = new Record(phoneNumber);
-        mRecordRepository.insert(record);
+        // Envoi du premier message qui va créer l'entrée
+        // de la retranscription en base de données
+        Message msg = new Message();
+        msg.obj = phoneNumber;
+        mRecordPersistenceHandler.sendMessage(msg);
 
+        mIntent = buildIntent();
         if (mSpeechRecognizer == null) {
             mSpeechRecognizer = SpeechRecognizer.createSpeechRecognizer(mContext);
             mSpeechRecognizer.setRecognitionListener(new SpeechRecognitionListener(mContext) {
                 @Override
                 public void onEndOfSpeech() {
-                    Log.d(TAG, "onEndOfSpeech()");
+
                 }
 
                 @Override
                 public void onError(int i) {
-                    Log.d(TAG, "onError() -> error="+i);
                     if (i == SpeechRecognizer.ERROR_SPEECH_TIMEOUT) {
+                        // Hack : on tente de relancer le SpeechRecognizer
+                        // pour écouter la conversation en cas d'erreur
                         mSpeechRecognizer.startListening(mIntent);
                     }
                 }
 
                 @Override
                 public void onResults(Bundle bundle) {
-                    StringBuilder conversation = new StringBuilder();
-                    if (record.getConversation() != null) {
-                        conversation.append(record.getConversation());
-                    }
                     ArrayList<String> results = bundle.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
                     if (results != null) {
                         for (String text : results) {
-                            conversation.append("- ").append(text).append("\n");
+                            mConversation.append("- ").append(text).append("\n");
                         }
-                        Log.d(TAG, "onResults() : " + conversation.toString());
-                        record.setConversation(conversation.toString());
-                        mRecordRepository.update(record);
+
+                        // Envoi de la nouvelle conversation dans la file de message
+                        Message msg = new Message();
+                        msg.obj = mConversation.toString();
+                        mRecordPersistenceHandler.sendMessage(msg);
                     }
-                    Log.d(TAG, "onResults() : recharging");
-                    //mSpeechRecognizer.stopListening();
+                    // On relance le SpeechRecognizer pour écouter
+                    // la conversation suivante (c'est un hack...)
                     mSpeechRecognizer.startListening(mIntent);
                 }
             });

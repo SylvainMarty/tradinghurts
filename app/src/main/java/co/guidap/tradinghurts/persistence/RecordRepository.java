@@ -1,6 +1,5 @@
 package co.guidap.tradinghurts.persistence;
 
-import android.app.Application;
 import android.arch.lifecycle.LiveData;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -17,11 +16,20 @@ public class RecordRepository {
         mRecordDao = db.recordDao();
         mAllRecords = mRecordDao.getAllRecords();
     }
-    public void insert (Record record) {
-        new InsertAsyncTask(mRecordDao).execute(record);
+
+    public long insert (Record record) {
+        return mRecordDao.insert(record);
     }
 
     public void update (Record record) {
+        mRecordDao.update(record);
+    }
+
+    public void insertAsync (Record record) {
+        new InsertAsyncTask(mRecordDao).execute(record);
+    }
+
+    public void updateAsync (Record record) {
         new UpdateAsyncTask(mRecordDao).execute(record);
     }
 
@@ -29,7 +37,7 @@ public class RecordRepository {
         return mAllRecords;
     }
 
-    public LiveData<Record> getRecord(int id) {
+    public LiveData<Record> getRecord(long id) {
         return mRecordDao.getRecord(id);
     }
 

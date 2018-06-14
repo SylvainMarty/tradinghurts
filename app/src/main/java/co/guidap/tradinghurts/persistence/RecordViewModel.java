@@ -21,11 +21,7 @@ public class RecordViewModel extends AndroidViewModel {
         return mAllRecords;
     }
 
-    public LiveData<Record> getRecord(int id) {
+    public LiveData<Record> getRecord(long id) {
         return mRepository.getRecord(id);
-    }
-
-    public void insert(Record record) {
-        mRepository.insert(record);
     }
 }
