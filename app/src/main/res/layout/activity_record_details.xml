@@ -20,15 +20,24 @@
 
             <TextView
                 android:id="@+id/phoneNumber"
-                android:layout_width="match_parent"
+                android:layout_width="82dp"
                 android:layout_height="29dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                android:textAppearance="@android:style/TextAppearance.Material.Medium" />
+
+            <TextView
+                android:id="@+id/date"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAlignment="textEnd" />
 
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:layout_marginTop="6dp"
             android:layout_weight="1"
             android:orientation="horizontal">
 
@@ -44,9 +53,18 @@
                     android:orientation="vertical">
 
                     <TextView
+                        android:id="@+id/textView2"
+                        android:layout_width="match_parent"
+                        android:layout_height="56dp"
+                        android:layout_marginBottom="3dp"
+                        android:layout_weight="1"
+                        android:text="@string/record_details_conversation_head"
+                        android:textAppearance="@android:style/TextAppearance.Material.Medium" />
+
+                    <TextView
                         android:id="@+id/conversation"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1" />
                 </LinearLayout>
             </android.support.v4.widget.NestedScrollView>

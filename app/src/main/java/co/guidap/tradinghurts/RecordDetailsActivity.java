@@ -6,11 +6,15 @@ import android.content.Intent;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telephony.PhoneNumberUtils;
 import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 import co.guidap.tradinghurts.R;
@@ -24,6 +28,7 @@ public class RecordDetailsActivity extends AppCompatActivity {
 
     private RecordViewModel mRecordViewModel;
     private TextView mPhoneNumberView;
+    private TextView mDateView;
     private TextView mConversationView;
 
     @Override
@@ -33,6 +38,7 @@ public class RecordDetailsActivity extends AppCompatActivity {
         setTitle(R.string.record_details_title);
 
         mPhoneNumberView = findViewById(R.id.phoneNumber);
+        mDateView = findViewById(R.id.date);
         mConversationView = findViewById(R.id.conversation);
         mRecordViewModel = ViewModelProviders.of(this).get(RecordViewModel.class);
 
@@ -44,7 +50,15 @@ public class RecordDetailsActivity extends AppCompatActivity {
                     RecordDetailsActivity.this.finish();
                 }
 
-                mPhoneNumberView.setText(record.getPhoneNumber());
+                mPhoneNumberView.setText(
+                        PhoneNumberUtils.formatNumber(record.getPhoneNumber(), Locale.getDefault().getCountry())
+                );
+                
+                if (record.getDate() != null) {
+                    DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.FRANCE);
+                    mDateView.setText(df.format(record.getDate()));
+                }
+
                 mConversationView.setText(record.getConversation());
             }
         });
