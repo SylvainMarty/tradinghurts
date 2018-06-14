@@ -53,7 +53,6 @@ public class RecordDetailsActivity extends AppCompatActivity {
                 mPhoneNumberView.setText(
                         PhoneNumberUtils.formatNumber(record.getPhoneNumber(), Locale.getDefault().getCountry())
                 );
-                
                 if (record.getDate() != null) {
                     DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss", Locale.FRANCE);
                     mDateView.setText(df.format(record.getDate()));

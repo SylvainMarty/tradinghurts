@@ -43,7 +43,7 @@ public class PhoneStateReceiver extends BroadcastReceiver {
                     // Call done
                     Intent stopIntent = new Intent(context, CallRecordService.class);
                     stopIntent.setAction(CallRecordService.ACTION_STOP_RECORDING);
-                    context.startService(stopIntent);
+                    context.stopService(stopIntent);
                     break;
                 case TelephonyManager.CALL_STATE_OFFHOOK:
                     // Call responded
