@@ -44,39 +44,32 @@ public class CallRecordService extends Service {
     @Override
     public void onCreate() {
         mNotificationManager = (NotificationManager) this.getSystemService(Context.NOTIFICATION_SERVICE);
-        mRecorder = new Recorder(this);
     }
 
     @Override
     public void onDestroy() {
-        Toast.makeText(this, "Service done", Toast.LENGTH_SHORT).show();
-        mRecorder = null;
+        Toast.makeText(this, "Call record done", Toast.LENGTH_SHORT).show();
+        this.exitSafely(this.startId);
+        super.onDestroy();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
             case ACTION_START_RECORDING:
-                if (serviceState != State.STOPPED) {
+                if (serviceState == State.RUNNING) {
                     break;
                 }
-                Log.d(TAG, "Starting service with startId=" + startId);
-                Toast
-                    .makeText(this, "Record started for "+intent.getStringExtra(EXTRA_INCOMING_NUMBER), Toast.LENGTH_SHORT)
-                    .show();
+                mRecorder = new Recorder(this);
                 // For each start request, send a message to start a job and deliver the
                 // start ID so we know which request we're stopping when we finish the job
                 startForeground(FOREGROUNG_ID, updateNotification());
                 this.startId = startId;
                 mRecorder.start(intent.getStringExtra(EXTRA_INCOMING_NUMBER));
                 serviceState = State.RUNNING;
-                break;
-            case ACTION_STOP_RECORDING:
-                if (serviceState != State.RUNNING) {
-                    break;
-                }
-                this.exitSafely(this.startId);
-                serviceState = State.STOPPED;
+                Toast
+                    .makeText(this, "Call record started", Toast.LENGTH_SHORT)
+                    .show();
                 break;
             default:
                 break;
@@ -114,7 +107,7 @@ public class CallRecordService extends Service {
             return builder.build();
         }
 
-        Log.d(TAG, "Notification builded in compatibility mode");
+        Log.i(TAG, "Notification builded in compatibility mode");
 
         return new NotificationCompat.Builder(this)
                 .setContentTitle(this.getString(R.string.notification_title))
@@ -130,9 +123,7 @@ public class CallRecordService extends Service {
      * @param startId
      */
     private void exitSafely(@Nullable Integer startId) {
-        Log.d(TAG, "Stopping service for startId="+startId);
         if (mRecorder != null) {
-            Log.d(TAG, "Stopping SpeechRecognizer");
             mRecorder.stop();
             mRecorder = null;
         }

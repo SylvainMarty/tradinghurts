@@ -9,7 +9,7 @@
     <!-- Errors -->
     <string name="speech_recognizer_not_available">Speech recognizer not available</string>
     <string name="no_record_registered">No record registered</string>
-    <string name="record_not_found">Record not found</string>
+    <string name="record_not_available">Record not available</string>
 
     <!-- Strings related to Activities -->
     <string name="record_list_title">Records list</string>

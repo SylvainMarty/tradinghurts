@@ -42,12 +42,13 @@ public class RecordDetailsActivity extends AppCompatActivity {
         mConversationView = findViewById(R.id.conversation);
         mRecordViewModel = ViewModelProviders.of(this).get(RecordViewModel.class);
 
-        mRecordViewModel.getRecord(getIntent().getIntExtra(EXTRA_RECORD_IDENTIFIER, 0)).observe(this, new Observer<Record>() {
+        mRecordViewModel.getRecord(getIntent().getLongExtra(EXTRA_RECORD_IDENTIFIER, 0)).observe(this, new Observer<Record>() {
             @Override
             public void onChanged(@Nullable final Record record) {
                 if (record == null) {
-                    Toast.makeText(RecordDetailsActivity.this, RecordDetailsActivity.this.getString(R.string.record_not_found), Toast.LENGTH_SHORT).show();
+                    Toast.makeText(RecordDetailsActivity.this, RecordDetailsActivity.this.getString(R.string.record_not_available), Toast.LENGTH_SHORT).show();
                     RecordDetailsActivity.this.finish();
+                    return;
                 }
 
                 mPhoneNumberView.setText(
